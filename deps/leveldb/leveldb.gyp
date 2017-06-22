@@ -85,6 +85,13 @@
                 '-pthread'
             ]
         }]
+      , ['OS == "android"', {
+            'defines': [
+                'MEMCMP_FLAG'
+              , '_REENTRANT'
+              , 'OS_ANDROID'
+            ]
+        }]
       , ['OS == "freebsd"', {
             'defines': [
                 'OS_FREEBSD=1'

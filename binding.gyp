@@ -20,6 +20,25 @@
               ]
             , 'cflags!': [ '-fno-tree-vrp' ]
           }]
+        , ['OS == "android"', {
+              "cflags": [
+                  "-fPIC"
+              ]
+            , "cflags!": [
+                  "-fPIE"
+              ]
+            , "ldflags": [
+                  "-fPIC"
+              ]
+            , "ldflags!": [
+                  "-fPIE"
+                , "-pie"
+              ]
+            , "libraries": [
+                  "-L$(NODE_LIB_DIR)"
+                , "-lnode" # Link to libnode.so as a workaround to https://github.com/android-ndk/ndk/issues/201#issuecomment-248060092
+              ]
+          }]
         ]
       , "dependencies": [
             "<(module_root_dir)/deps/leveldb/leveldb.gyp:leveldb"
