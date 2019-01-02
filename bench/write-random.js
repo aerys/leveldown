@@ -1,59 +1,67 @@
-const leveldown   = require('../')
-    , crypto      = require('crypto')
-    , fs          = require('fs')
-    , du          = require('du')
-    , uuid        = require('node-uuid')
+const leveldown = require('../')
+const crypto = require('crypto')
+const fs = require('fs')
+const du = require('du')
+const uuid = require('uuid')
+const path = require('path')
+const rimraf = require('rimraf')
+const argv = require('optimist').argv
 
-    , entryCount  = 10000000
-    , concurrency = 10
-    , timesFile   = './write_random_times.csv'
-    , dbDir       = './write_random.db'
-    , data        = crypto.randomBytes(256) // buffer
+const options = {
+  db: argv.db || path.join(__dirname, 'db'),
+  num: argv.num || 10000000,
+  concurrency: argv.concurrency || 10,
+  cacheSize: argv.cacheSize || 8,
+  writeBufferSize: argv.writeBufferSize || 4,
+  valueSize: argv.valueSize || 100,
+  out: argv.out || path.join(__dirname, 'write-random.csv')
+}
 
-var db          = leveldown(dbDir)
-  , timesStream = fs.createWriteStream(timesFile, 'utf8')
+const data = crypto.randomBytes(256) // buffer
+
+rimraf.sync(options.db)
+
+const db = leveldown(options.db)
+const timesStream = fs.createWriteStream(options.out, 'utf8')
 
 function report (ms) {
-  console.log('Wrote', entryCount, 'in', Math.floor(ms / 1000) + 's')
+  console.log('Wrote', options.num, 'in', Math.floor(ms / 1000) + 's')
   timesStream.end()
-  du(dbDir, function (err, size) {
-    if (err)
-      throw err
+  du(options.db, function (err, size) {
+    if (err) throw err
     console.log('Database size:', Math.floor(size / 1024 / 1024) + 'M')
   })
-  console.log('Wrote times to ', timesFile)
+  console.log('Wrote times to ', options.out)
 }
 
 db.open(function (err) {
-  if (err)
-    throw err
+  if (err) throw err
 
-  var inProgress  = 0
-    , totalWrites = 0
-    , startTime   = Date.now()
-    , writeBuf    = ''
+  let inProgress = 0
+  let totalWrites = 0
+  const startTime = Date.now()
+  let writeBuf = ''
 
-  function write() {
-    if (totalWrites % 100000 == 0) console.log(inProgress, totalWrites)
+  function write () {
+    if (totalWrites % 100000 === 0) console.log(inProgress, totalWrites)
 
-    if (totalWrites % 1000 == 0) {
+    if (totalWrites % 1000 === 0) {
       timesStream.write(writeBuf)
       writeBuf = ''
     }
 
-    if (totalWrites++ == entryCount)
-      return report(Date.now() - startTime)
+    if (totalWrites++ === options.num) return report(Date.now() - startTime)
+    if (inProgress >= options.concurrency || totalWrites > options.num) return
 
-    if (inProgress >= concurrency || totalWrites > entryCount)
-      return
-
-    var time = process.hrtime()
+    var start = process.hrtime()
     inProgress++
 
     db.put(uuid.v4(), data, function (err) {
-      if (err)
-        throw err
-      writeBuf += (Date.now() - startTime) + ',' + process.hrtime(time)[1] + '\n'
+      if (err) throw err
+      var duration = process.hrtime(start)
+      var nano = (duration[0] * 1e9) + duration[1]
+
+      writeBuf += (Date.now() - startTime) + ',' + nano + '\n'
       inProgress--
       process.nextTick(write)
     })

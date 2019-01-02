@@ -1,5 +1,11 @@
-const test      = require('tape')
-    , leveldown = require('../')
-    , abstract  = require('abstract-leveldown/abstract/leveldown-test')
+const test = require('tape')
+const leveldown = require('..')
 
-abstract.args(leveldown, test)
+test('test database creation non-string location throws', function (t) {
+  t.throws(
+    leveldown.bind(null, {}),
+    /constructor requires a location string argument/,
+    'non-string location leveldown() throws'
+  )
+  t.end()
+})

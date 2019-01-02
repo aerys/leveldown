@@ -1,3 +1,5 @@
+# When adding entries here, remember to also update `.npmignore`.
+
 node_modules/
 build/
 build-pre-gyp/
@@ -15,3 +17,7 @@ leakydb
 npm-debug.log
 prebuilds/
 yarn.lock
+.nyc_output
+bench/db/
+bench/*.png
+*.csv
