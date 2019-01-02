@@ -28,17 +28,23 @@ done
 npm install
 
 ARCH=arm
-CC_VER="4.9"
 DEST_CPU="$ARCH"
 SUFFIX="$ARCH-linux-androideabi"
 TOOLCHAIN_NAME="$SUFFIX"
 
+if [ ! -d ${ANDROID_HOME}/toolchains/default ]; then
+    echo "A standalone toolchain must be installed in ${ANDROID_HOME}/toolchains/default."
+    echo "Example: make_standalone_toolchain.py --api 26 --install-dir ${ANDROID_NDK}/toolchains/default --arch arm --force"
+    echo "https://developer.android.com/ndk/guides/standalone_toolchain"
+    exit 1
+fi
+
 export TOOLCHAIN=${ANDROID_HOME}/toolchains/default
 export PATH=${TOOLCHAIN}/bin:${PATH}
 export AR=${TOOLCHAIN}/bin/${SUFFIX}-ar
-export CC=${TOOLCHAIN}/bin/${SUFFIX}-gcc
-export CXX=${TOOLCHAIN}/bin/${SUFFIX}-g++
-export LINK=${TOOLCHAIN}/bin/${SUFFIX}-g++
+export CC=${TOOLCHAIN}/bin/${SUFFIX}-clang
+export CXX=${TOOLCHAIN}/bin/${SUFFIX}-clang++
+export LINK=${TOOLCHAIN}/bin/${SUFFIX}-clang++
 
 export TARGET_OS=OS_ANDROID_CROSSCOMPILE
 
